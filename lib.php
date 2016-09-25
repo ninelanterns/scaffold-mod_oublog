@@ -918,7 +918,7 @@ function oublog_cm_info_dynamic(cm_info $cm) {
 function oublog_grade_item_update($oublog, $grades = null) {
     global $CFG;
     require_once($CFG->libdir.'/gradelib.php');
-    require_once('locallib.php');
+    require_once(__DIR__.'/locallib.php');
     // Use 'grade' or 'scale' depends upon 'grading'.
     if ($oublog->grading == OUBLOG_USE_RATING) {
         $oublogscale = $oublog->scale;
