@@ -1199,7 +1199,7 @@ function oublog_extend_settings_navigation(settings_navigation $settings, naviga
         return;
     }
 
-    include_once($CFG->dirroot.'/mod/oublog/locallib.php');
+    include_once($CFG->dirroot.'/mod/oublog/locallib.php');       
     if (oublog_oualerts_enabled() && oublog_get_reportingemail($oublog)) {
         if (has_capability('report/oualerts:managealerts',
                 context_module::instance($PAGE->cm->id))) {
@@ -1209,6 +1209,16 @@ function oublog_extend_settings_navigation(settings_navigation $settings, naviga
                             settings_navigation::TYPE_CUSTOM);
         }
     }
+
+    $params = array(
+        'course' => $PAGE->course->id
+    );
+
+    $node->add(
+        get_string('search:post', 'oublog'),
+        new moodle_url('/mod/oublog/courseparticipation.php', $params),
+        navigation_node::TYPE_CUSTOM
+    );
 }
 
 /**
@@ -1522,4 +1532,84 @@ function oublog_get_user_grades($oublog, $userid = 0) {
         }
     }
     return $results;
+}
+
+
+/**
+ * Return all blogs on a speecific course for current user
+ *
+ * @param int $courseid 
+ * @param int $userid
+ * @return array
+ */
+function oublog_get_user_course_posts($courseid, $userid, $start, $end) {
+    global $DB;
+
+    $params['courseid'] = $courseid;
+    $params['userid'] = $userid;
+    $params['start'] = $start;
+    $params['end'] = $end;
+
+    $timefilter="";
+
+    if ($start && $end) {
+        $timefilter= "AND mop.timeposted BETWEEN :start AND :end";
+    }
+
+    $sql = "SELECT
+                mop.id AS id,
+                CONCAT( mo.name,': ',mop.title) AS name,
+                mop.message AS content,
+                mop.timeposted
+            FROM
+                {oublog_posts} mop
+            INNER JOIN {oublog_instances} moi ON
+                mop.oubloginstancesid = moi.id
+            INNER JOIN {oublog} mo ON
+                moi.oublogid = mo.id
+            WHERE
+                moi.userid = :userid
+                AND mo.course = :courseid
+                $timefilter
+            ORDER BY
+                mop.timeposted DESC
+            ";
+
+    $results = $DB->get_records_sql($sql, $params);
+
+    if ($results) {
+        return $results;
+    }
+    return [];
+}
+
+function oublog_get_users_in_course($courseid) {
+    global $DB;
+
+    $params['courseid'] = $courseid;
+
+    $sql = "SELECT
+                DISTINCT moi.userid,
+                mu.firstname,
+                mu.lastname
+            FROM
+                {oublog_posts} mop
+            INNER JOIN {oublog_instances} moi ON
+                mop.oubloginstancesid = moi.id
+            INNER JOIN {oublog} mo ON
+                moi.oublogid = mo.id
+            INNER JOIN {user} mu ON
+                moi.userid = mu.id
+            WHERE
+                mo.course = :courseid
+            ORDER BY
+                mu.firstname
+            ";
+
+    $results = $DB->get_records_sql($sql, $params);
+
+    if ($results) {
+        return $results;
+    }
+    return [];
 }
