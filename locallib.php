@@ -5645,6 +5645,14 @@ class oublog_participation_timefilter_form extends moodleform {
             $mform->addElement('hidden', 'group', $cdata['group']);
             $mform->setType('group', PARAM_INT);
         }
+        if (isset($cdata['course'])) {
+            $mform->addElement('hidden', 'course', $cdata['course']);
+            $mform->setType('course', PARAM_INT);
+        }
+        if (isset($cdata['individual'])) {
+            $mform->addElement('hidden', 'individual', $cdata['individual']);
+            $mform->setType('individual', PARAM_INT);
+        }
         $this->add_action_buttons(false, get_string('timefilter_submit', 'oublog'));
     }
 
