@@ -1542,18 +1542,31 @@ function oublog_get_user_grades($oublog, $userid = 0) {
  * @param int $userid
  * @return array
  */
-function oublog_get_user_course_posts($courseid, $userid, $start, $end) {
-    global $DB;
+function oublog_get_user_course_posts($courseid, $group, $userid, $start, $end)
+{
+    global $DB, $USER;
 
     $params['courseid'] = $courseid;
     $params['userid'] = $userid;
     $params['start'] = $start;
     $params['end'] = $end;
 
-    $timefilter="";
+    $groupfilter = "";
+    $timefilter = "";
+
+    if ($group === 1) {
+        $groupIds = array_column(groups_get_all_groups($courseid, $USER->id), 'id');
+
+        if (count($groupIds) > 0) {
+            $groupfilter  = "AND mop.groupid IN (" . implode(',', $groupIds) . ")";
+        }
+        else {
+            return null;
+        }
+    }
 
     if ($start && $end) {
-        $timefilter= "AND mop.timeposted BETWEEN :start AND :end";
+        $timefilter = "AND mop.timeposted BETWEEN :start AND :end";
     }
 
     $sql = "SELECT
@@ -1570,6 +1583,7 @@ function oublog_get_user_course_posts($courseid, $userid, $start, $end) {
             WHERE
                 moi.userid = :userid
                 AND mo.course = :courseid
+                $groupfilter
                 $timefilter
             ORDER BY
                 mop.timeposted DESC
@@ -1583,8 +1597,22 @@ function oublog_get_user_course_posts($courseid, $userid, $start, $end) {
     return [];
 }
 
-function oublog_get_users_in_course($courseid) {
-    global $DB;
+function oublog_get_users_in_course($courseid, $group)
+{
+    global $DB, $USER;
+
+    $groupfilter = "";
+
+    if ($group === 1) {
+        $groupIds = array_column(groups_get_all_groups($courseid, $USER->id), 'id');
+
+        if (count($groupIds) > 0) {
+            $groupfilter  = "AND mop.groupid IN (" . implode(',', $groupIds) . ")";
+        }
+        else {
+            return null;
+        }
+    }
 
     $params['courseid'] = $courseid;
 
@@ -1602,6 +1630,7 @@ function oublog_get_users_in_course($courseid) {
                 moi.userid = mu.id
             WHERE
                 mo.course = :courseid
+                $groupfilter
             ORDER BY
                 mu.firstname
             ";
@@ -1611,5 +1640,5 @@ function oublog_get_users_in_course($courseid) {
     if ($results) {
         return $results;
     }
-    return [];
+    return null;
 }
