@@ -1547,13 +1547,11 @@ function oublog_get_user_course_posts($courseid, $group, $userid, $start, $end)
     $timefilter = "";
 
     if ($group === 1) {
-        $groupIds = array_column(groups_get_all_groups($courseid, $USER->id), 'id');
+        $groupIds = groups_get_user_groups($courseid)[0];
 
+        $groupfilter  = "AND mop.groupid IN (0)";
         if (count($groupIds) > 0) {
-            $groupfilter  = "AND mop.groupid IN (" . implode(',', $groupIds) . ")";
-        }
-        else {
-            return null;
+            $groupfilter  = "AND mop.groupid IN (0," . implode(',', $groupIds) . ")";
         }
     }
 
@@ -1596,13 +1594,11 @@ function oublog_get_users_in_course($courseid, $group)
     $groupfilter = "";
 
     if ($group === 1) {
-        $groupIds = array_column(groups_get_all_groups($courseid, $USER->id), 'id');
+        $groupIds = groups_get_user_groups($courseid)[0];
 
+        $groupfilter  = "AND mop.groupid IN (0)";
         if (count($groupIds) > 0) {
-            $groupfilter  = "AND mop.groupid IN (" . implode(',', $groupIds) . ")";
-        }
-        else {
-            return null;
+            $groupfilter  = "AND mop.groupid IN (0," . implode(',', $groupIds) . ")";
         }
     }
 
