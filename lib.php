@@ -1548,11 +1548,11 @@ function oublog_get_user_course_posts($courseid, $group, $userid, $start, $end)
 
     $params['courseid'] = $courseid;
     $params['userid'] = $userid;
-    $params['start'] = $start;
-    $params['end'] = $end;
+    $params['timestart'] = $start;
+    $params['timeend'] = $end;
 
     $groupfilter = "";
-    $timefilter = "";
+    $period = "";
 
     if ($group === 1) {
         $groupIds = groups_get_user_groups($courseid)[0];
@@ -1563,8 +1563,11 @@ function oublog_get_user_course_posts($courseid, $group, $userid, $start, $end)
         }
     }
 
-    if ($start && $end) {
-        $timefilter = "AND mop.timeposted BETWEEN :start AND :end";
+    if ($start) {
+        $period = 'AND mop.timeposted > :timestart ';
+    }
+    if ($end) {
+        $period .= 'AND mop.timeposted < :timeend ';
     }
 
     $sql = "SELECT
@@ -1582,7 +1585,7 @@ function oublog_get_user_course_posts($courseid, $group, $userid, $start, $end)
                 moi.userid = :userid
                 AND mo.course = :courseid
                 $groupfilter
-                $timefilter
+                $period
             ORDER BY
                 mop.timeposted DESC
             ";
