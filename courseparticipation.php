@@ -31,6 +31,8 @@ require_once($CFG->dirroot . '/mod/oublog/locallib.php');
 $courseid = required_param('course', PARAM_INT); // Course ID.
 $curindividual = optional_param('individual', 0, PARAM_INT);
 $page = optional_param('page', 0, PARAM_INT);
+$startdownload = optional_param('startdownload', 0, PARAM_INT);
+$enddownload = optional_param('enddownload', 0, PARAM_INT);
 
 $download = optional_param('download', '', PARAM_ALPHA);
 
@@ -39,7 +41,7 @@ $course = $DB->get_record('course', array('id' => $courseid), '*', MUST_EXIST);
 
 $context = context_course::instance($courseid);
 
-$isStudent = !has_capability('moodle/course:update', $context, $USER->id) ? true : false;
+$isStudent = !has_capability('mod/oublog:grade', $context, $USER->id) ? true : false;
 
 $group = 0;
 if (!$isStudent) {
@@ -108,9 +110,11 @@ if ($curindividual) {
         if ($submitted = $timefilter->get_data()) {
             if ($submitted->start) {
                 $start = strtotime('00:00:00', $submitted->start);
+                $params['startdownload'] = $start;
             }
             if ($submitted->end) {
                 $end = strtotime('23:59:59', $submitted->end);
+                $params['enddownload'] = $end;
             }
         }
 
@@ -127,13 +131,13 @@ if ($curindividual) {
             $label = get_string('separateindividual', 'oublog') . ' ';
             $active = '';
             foreach ($users as $user) {
-                $url = $urlroot . '?course=' . $course->id . '&amp;individual=' . $user->userid;
-                $url = str_replace($CFG->wwwroot, '', $url);
-                $url = str_replace('&amp;', '&', $url);
+                $userurl = $urlroot . '?course=' . $course->id . '&amp;individual=' . $user->userid;
+                $userurl = str_replace($CFG->wwwroot, '', $userurl);
+                $userurl = str_replace('&amp;', '&', $userurl);
                 if ($curindividual == $user->userid) {
-                    $active = $url;
+                    $active = $userurl;
                 }
-                $urls[$url] = format_string($user->firstname . ' ' . $user->lastname);
+                $urls[$userurl] = format_string($user->firstname . ' ' . $user->lastname);
             }
             if (!empty($urls)) {
                 $select = new url_select($urls, $active, null, 'selectindividual');
@@ -146,6 +150,9 @@ if ($curindividual) {
         echo html_writer::tag('h2', $course->fullname, array('class' => 'oublog-post-title'));
 
         $timefilter->display();
+    } else {
+        $start = $startdownload;
+        $end = $enddownload;
     }
 
     $posts = oublog_get_user_course_posts($course->id, $group, $curindividual, $start, $end);
@@ -174,8 +181,6 @@ if ($curindividual) {
     $context = context_course::instance($course->id);
     $PAGE->set_pagelayout('incourse');
     require_course_login($course, true);
-
-
 
     $url->params($params);
     $PAGE->set_url($url);
