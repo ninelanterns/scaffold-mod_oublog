@@ -1434,7 +1434,10 @@ function oublog_get_user_grades($oublog, $userid = 0) {
     $options->userid = $userid;
     $options->aggregationmethod = $oublog->assessed;
     $options->scaleid = $oublog->scale;
-    $options->cmid = $oublog->cmidnumber;
+
+	$module = $DB->get_record('modules', array('name' => 'oublog'));
+	$course_module = $DB->get_record('course_modules', array('course' => $oublog->course, 'module' => $module->id, 'instance' => $oublog->id));
+	$options->cmid = $course_module->id;
 
     // There now follows a lift of get_user_grades() from rating lib
     // but with the requirement for items modified.
@@ -1452,7 +1455,7 @@ function oublog_get_user_grades($oublog, $userid = 0) {
     }
 
     // Going direct to the db for the context id seemed wrong.
-    $context = context_module::instance($options->cmid );
+    $context = context_module::instance($options->cmid);
 
     $params = array();
     $params['contextid'] = $context->id;
@@ -1464,7 +1467,7 @@ function oublog_get_user_grades($oublog, $userid = 0) {
     $singleuserwhere = '';
     if ($options->userid != 0) {
         // Get the grades for the {posts} the user is responsible for.
-        $cm = get_coursemodule_from_id('oublog', $oublog->cmidnumber);
+        $cm = get_coursemodule_from_id('oublog', $course_module->id);
         list($posts, $recordcount) = oublog_get_posts($oublog, $context, 0, $cm, 0, $options->userid);
         foreach ($posts as $post) {
             $postids[] = (int)$post->id;
